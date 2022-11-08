@@ -20,8 +20,7 @@ Matrix::Matrix(int row, int col)
     }
     else
     {
-        const char *msg = "\nMatrix.cpp Matrix::Matrix()>>> Invalid row or col quantity.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp Matrix::Matrix()>>> Invalid row or col quantity.\n");
     }
 }
 
@@ -105,7 +104,7 @@ void Matrix::setEntry(double value, int row, int col)
     }
     else
     {
-        const char *msg = "\nMatrix.cpp setEntry(double, int, int)>>> Setting value at invalid index.\n";
+        throw std::logic_error("\nMatrix.cpp setEntry(double, int, int)>>> Setting value at invalid index.\n");
     }
 }
 
@@ -117,8 +116,7 @@ double Matrix::getEntry(int row, int col) const
     }
     else
     {
-        const char *msg = "\nMatrix.cpp Matrix::getEntry(int, int)>>> Getting value from invalid index.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp Matrix::getEntry(int, int)>>> Getting value from invalid index.\n");
     }
 }
 
@@ -152,8 +150,7 @@ Matrix operator*(const Matrix &A, const Matrix &B)
 {
     if (A.getCol() != B.getRow())
     {
-        const char *msg = "\nMatrix.cpp Matrix operator*(Matrix, Matrix)>>> Cannot multiply the parameter matrices.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp Matrix operator*(Matrix, Matrix)>>> Cannot multiply the parameter matrices.\n");
     }
     else
     {
@@ -178,8 +175,7 @@ Matrix operator+(const Matrix &A, const Matrix &B)
 {
     if (A.getRow() != B.getRow() || A.getCol() != B.getCol())
     {
-        const char *msg = "\nMatrix.cpp Matrix operator+(Matrix, Matrix)>>> Cannot sum the parameter matrices.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp Matrix operator+(Matrix, Matrix)>>> Cannot sum the parameter matrices.\n");
     }
     else
     {
@@ -199,8 +195,7 @@ Matrix operator-(const Matrix &A, const Matrix &B)
 {
     if (A.getRow() != B.getRow() || A.getCol() != B.getCol())
     {
-        const char *msg = "\nMatrix.cpp Matrix operator-(Matrix, Matrix)>>> Cannot subtract the parameter matrices.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp Matrix operator-(Matrix, Matrix)>>> Cannot subtract the parameter matrices.\n");
     }
     else
     {
@@ -226,8 +221,7 @@ void Matrix::row_interchange(int row1, int row2)
     }
     else
     {
-        const char *msg = "\nMatrix.cpp row_interchange(int, int)>>> Invalid rows.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp row_interchange(int, int)>>> Invalid rows.\n");
     }
 }
 
@@ -242,8 +236,7 @@ void Matrix::row_scale(int row, double factor)
     }
     else
     {
-        const char *msg = "\nMatrix.cpp row_scale(int, double)>>> Invalid row or factor.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp row_scale(int, double)>>> Invalid row or factor.\n");
     }
 }
 
@@ -258,8 +251,7 @@ void Matrix::row_combine(int source_row, double factor, int row)
     }
     else
     {
-        const char *msg = "\nMatrix.cpp row_combine(int, double, int)>>> Invalid rows.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp row_combine(int, double, int)>>> Invalid rows.\n");
     }
 }
 
@@ -399,8 +391,7 @@ double Matrix::det()
     }
     else
     {
-        const char *msg = "\nMatrix.cpp double det()>>> Invalid dimensions.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp double det()>>> Invalid dimensions.\n");
     }
 }
 
@@ -437,8 +428,7 @@ Matrix Matrix::inverse()
             }
             if (hasZeroRow)
             {
-                const char *msg = "\nMatrix.cpp Matrix inverse()>>> Inverse does not exist.\n";
-                throw msg;
+                throw std::logic_error("\nMatrix.cpp Matrix inverse()>>> Inverse does not exist.\n");
             }
         }
         Matrix N = M.gauss_jordan();
@@ -454,7 +444,6 @@ Matrix Matrix::inverse()
     }
     else
     {
-        const char *msg = "\nMatrix.cpp Matrix inverse()>>> Invalid dimensions.\n";
-        throw msg;
+        throw std::logic_error("\nMatrix.cpp Matrix inverse()>>> Invalid dimensions.\n");
     }
 }
