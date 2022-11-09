@@ -124,7 +124,7 @@ double Matrix::getRow() const { return this->n; }
 
 double Matrix::getCol() const { return this->m; }
 
-void Matrix::print(int precision) const
+void Matrix::print(int rooms, int precision) const
 {
     int p = precision;
     if (precision < 0)
@@ -139,11 +139,121 @@ void Matrix::print(int precision) const
         std::cout << " |";
         for (int j = 0; j < this->m; j++)
         {
-            std::cout << std::setw(p + 8) << this->matrix[i][j];
+            std::cout << std::setw(p + rooms) << this->matrix[i][j];
         }
         std::cout << " |" << std::endl;
     }
     std::cout << std::endl;
+}
+
+void Matrix::row_interchange(int row1, int row2)
+{
+    if (row1 <= this->n && row2 <= this->n)
+    {
+        double *temp = this->matrix[row1];
+        this->matrix[row1] = this->matrix[row2];
+        this->matrix[row2] = temp;
+    }
+    else
+    {
+        throw std::logic_error("\nMatrix.cpp row_interchange(int, int)>>> Invalid rows.\n");
+    }
+}
+
+void Matrix::row_scale(int row, double factor)
+{
+    if (row <= this->n && factor != 0)
+    {
+        for (int j = 0; j < this->m; j++)
+        {
+            this->matrix[row][j] *= factor;
+        }
+    }
+    else
+    {
+        throw std::logic_error("\nMatrix.cpp row_scale(int, double)>>> Invalid row or factor.\n");
+    }
+}
+
+void Matrix::row_combine(int source_row, double factor, int row)
+{
+    if (source_row <= this->n && row <= this->m && source_row != row)
+    {
+        for (int j = 0; j < this->m; j++)
+        {
+            this->matrix[row][j] += this->matrix[source_row][j] * factor;
+        }
+    }
+    else
+    {
+        throw std::logic_error("\nMatrix.cpp row_combine(int, double, int)>>> Invalid rows.\n");
+    }
+}
+
+void Matrix::Gauss()
+{
+    int significant_ones = 0;
+    for (int j = 0; j < this->m; j++)
+    {
+        for (int i = significant_ones; i < this->n; i++)
+        {
+            bool is_zero_col = true;
+            for (int n = 0; n < this->n; n++)
+            {
+                if (this->matrix[i][j] == 0.0)
+                {
+                    for (int k = i; k < this->n - 1; k++)
+                    {
+                        this->row_interchange(k, k + 1);
+                    }
+                }
+                else
+                {
+                    is_zero_col = false;
+                    break;
+                }
+            }
+            if (!is_zero_col)
+            {
+                double factor = 1.0 / (this->matrix[i][j]);
+                this->row_scale(i, factor);
+                significant_ones++;
+                for (int k = i + 1; k < this->n; k++)
+                {
+                    if (this->matrix[k][j] != 0.0)
+                    {
+                        factor = (-1) * (this->matrix[k][j]);
+                        this->row_combine(i, factor, k);
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
+
+void Matrix::Gauss_Jordan()
+{
+    this->Gauss();
+    for (int i = this->n - 1; i >= 0; i--)
+    {
+        for (int j = 0; j < this->m; j++)
+        {
+            if (this->matrix[i][j] != 0)
+            {
+                double factor;
+                for (int k = i; k > 0; k--)
+                {
+                    if (this->matrix[k - 1][j] != 0)
+                    {
+                        factor = (-1.0) * this->matrix[k - 1][j];
+                        this->row_combine(i, factor, k - 1);
+                    }
+                }
+                break;
+            }
+        }
+    }
 }
 
 Matrix operator*(const Matrix &A, const Matrix &B)
@@ -211,77 +321,33 @@ Matrix operator-(const Matrix &A, const Matrix &B)
     }
 }
 
-void Matrix::row_interchange(int row1, int row2)
+Matrix trans(const Matrix &M)
 {
-    if (row1 <= this->n && row2 <= this->n)
+    Matrix T = M;
+    for (int i = 0; i < T.getRow(); i++)
     {
-        double *temp = this->matrix[row1];
-        this->matrix[row1] = this->matrix[row2];
-        this->matrix[row2] = temp;
-    }
-    else
-    {
-        throw std::logic_error("\nMatrix.cpp row_interchange(int, int)>>> Invalid rows.\n");
-    }
-}
-
-void Matrix::row_scale(int row, double factor)
-{
-    if (row <= this->n && factor != 0)
-    {
-        for (int j = 0; j < this->m; j++)
+        for (int j = 0; j < T.getCol(); j++)
         {
-            this->matrix[row][j] *= factor;
-        }
-    }
-    else
-    {
-        throw std::logic_error("\nMatrix.cpp row_scale(int, double)>>> Invalid row or factor.\n");
-    }
-}
-
-void Matrix::row_combine(int source_row, double factor, int row)
-{
-    if (source_row <= this->n && row <= this->m && source_row != row)
-    {
-        for (int j = 0; j < this->m; j++)
-        {
-            this->matrix[row][j] += this->matrix[source_row][j] * factor;
-        }
-    }
-    else
-    {
-        throw std::logic_error("\nMatrix.cpp row_combine(int, double, int)>>> Invalid rows.\n");
-    }
-}
-
-Matrix Matrix::t()
-{
-    Matrix T(this->m, this->n);
-    for (int i = 0; i < T.n; i++)
-    {
-        for (int j = 0; j < T.m; j++)
-        {
-            T.matrix[i][j] = this->matrix[j][i];
+            T.setEntry(M.getEntry(j, i), i, j);
         }
     }
     return T;
 }
 
-Matrix Matrix::gauss()
+Matrix gauss(const Matrix &M)
 {
-    Matrix G = *this;
+    Matrix G = M;
     int significant_ones = 0;
-    for (int j = 0; j < G.m; j++)
+    for (int j = 0; j < G.getCol(); j++)
     {
-        for (int i = significant_ones; i < G.n; i++)
+        for (int i = significant_ones; i < G.getRow(); i++)
         {
             bool is_zero_col = true;
-            for (int n = 0; n < G.n; n++)
+            for (int n = 0; n < G.getRow(); n++)
             {
-                if (G.matrix[i][j] == 0.0)
+                if (G.getEntry(i, j) == 0.0)
                 {
-                    for (int k = i; k < G.n - 1; k++)
+                    for (int k = i; k < G.getRow() - 1; k++)
                     {
                         G.row_interchange(k, k + 1);
                     }
@@ -294,14 +360,14 @@ Matrix Matrix::gauss()
             }
             if (!is_zero_col)
             {
-                double factor = 1.0 / (G.matrix[i][j]);
+                double factor = 1.0 / (G.getEntry(i, j));
                 G.row_scale(i, factor);
                 significant_ones++;
-                for (int k = i + 1; k < G.n; k++)
+                for (int k = i + 1; k < G.getRow(); k++)
                 {
-                    if (G.matrix[k][j] != 0.0)
+                    if (G.getEntry(k, j) != 0.0)
                     {
-                        factor = (-1) * (G.matrix[k][j]);
+                        factor = (-1) * (G.getEntry(k, j));
                         G.row_combine(i, factor, k);
                     }
                 }
@@ -312,21 +378,21 @@ Matrix Matrix::gauss()
     return G;
 }
 
-Matrix Matrix::gauss_jordan()
+Matrix gauss_jordan(const Matrix &M)
 {
-    Matrix GJ = this->gauss();
-    for (int i = GJ.n - 1; i >= 0; i--)
+    Matrix GJ = gauss(M);
+    for (int i = GJ.getRow() - 1; i >= 0; i--)
     {
-        for (int j = 0; j < GJ.m; j++)
+        for (int j = 0; j < GJ.getCol(); j++)
         {
-            if (GJ.matrix[i][j] != 0)
+            if (GJ.getEntry(i, j) != 0)
             {
                 double factor;
                 for (int k = i; k > 0; k--)
                 {
-                    if (GJ.matrix[k - 1][j] != 0)
+                    if (GJ.getEntry(k - 1, j) != 0)
                     {
-                        factor = (-1.0) * GJ.matrix[k - 1][j];
+                        factor = (-1.0) * GJ.getEntry(k - 1, j);
                         GJ.row_combine(i, factor, k - 1);
                     }
                 }
@@ -337,23 +403,23 @@ Matrix Matrix::gauss_jordan()
     return GJ;
 }
 
-double Matrix::det()
+double det(const Matrix &M)
 {
-    if (this->n == this->m && this->n > 0)
+    if (M.getRow() == M.getCol() && M.getRow() > 0)
     {
         double d = 1;
-        Matrix G = *this;
+        Matrix G = M;
         int significant_ones = 0;
-        for (int j = 0; j < G.m; j++)
+        for (int j = 0; j < G.getCol(); j++)
         {
-            for (int i = significant_ones; i < G.n; i++)
+            for (int i = significant_ones; i < G.getRow(); i++)
             {
                 bool is_zero_col = true;
-                for (int n = 0; n < G.n; n++)
+                for (int n = 0; n < G.getRow(); n++)
                 {
-                    if (G.matrix[i][j] == 0.0)
+                    if (G.getEntry(i, j) == 0.0)
                     {
-                        for (int k = i; k < G.n - 1; k++)
+                        for (int k = i; k < G.getRow() - 1; k++)
                         {
                             G.row_interchange(k, k + 1);
                         }
@@ -367,15 +433,15 @@ double Matrix::det()
                 }
                 if (!is_zero_col)
                 {
-                    double factor = 1.0 / (G.matrix[i][j]);
+                    double factor = 1.0 / (G.getEntry(i, j));
                     G.row_scale(i, factor);
                     d /= factor;
                     significant_ones++;
-                    for (int k = i + 1; k < G.n; k++)
+                    for (int k = i + 1; k < G.getRow(); k++)
                     {
-                        if (G.matrix[k][j] != 0.0)
+                        if (G.getEntry(k, j) != 0.0)
                         {
-                            factor = (-1) * (G.matrix[k][j]);
+                            factor = (-1) * (G.getEntry(k, j));
                             G.row_combine(i, factor, k);
                         }
                     }
@@ -383,9 +449,9 @@ double Matrix::det()
                 }
             }
         }
-        for (int i = 0; i < G.n; i++)
+        for (int i = 0; i < G.getRow(); i++)
         {
-            d *= G.matrix[i][i];
+            d *= G.getEntry(i, i);
         }
         return d;
     }
@@ -395,49 +461,36 @@ double Matrix::det()
     }
 }
 
-Matrix Matrix::inverse()
+Matrix inv(const Matrix &A)
 {
-    if (this->n == this->m && this->n > 0)
+    if (A.getRow() == A.getCol() && A.getRow() > 0)
     {
-        Matrix M(this->n, 2 * this->m);
-        for (int i = 0; i < this->n; i++)
+        if (det(A) == 0)
         {
-            for (int j = 0; j < this->m; j++)
+            throw std::logic_error("\nMatrix.cpp Matrix inverse()>>> Inverse does not exist.\n");
+        }
+        Matrix M(A.getRow(), 2 * A.getCol());
+        for (int i = 0; i < A.getRow(); i++)
+        {
+            for (int j = 0; j < A.getCol(); j++)
             {
-                M.matrix[i][j] = this->matrix[i][j];
+                M.setEntry(A.getEntry(i, j), i, j);
             }
-            for (int j = this->m; j < 2 * this->m; j++)
+            for (int j = A.getCol(); j < 2 * A.getCol(); j++)
             {
-                if (i + this->n == j)
+                if (i + A.getRow() == j)
                 {
-                    M.matrix[i][j] = 1;
+                    M.setEntry(1, i, j);
                 }
             }
         }
-        bool hasZeroRow;
-        for (int i = 0; i < this->n; i++)
+        Matrix N = gauss_jordan(M);
+        Matrix I(A.getRow(), A.getCol());
+        for (int i = 0; i < A.getRow(); i++)
         {
-            hasZeroRow = true;
-            for (int j = 0; j < this->m; j++)
+            for (int j = 0; j < A.getCol(); j++)
             {
-                if (M.matrix[i][j] != 0)
-                {
-                    hasZeroRow = false;
-                    break;
-                }
-            }
-            if (hasZeroRow)
-            {
-                throw std::logic_error("\nMatrix.cpp Matrix inverse()>>> Inverse does not exist.\n");
-            }
-        }
-        Matrix N = M.gauss_jordan();
-        Matrix I(this->n, this->m);
-        for (int i = 0; i < this->n; i++)
-        {
-            for (int j = 0; j < this->m; j++)
-            {
-                I.matrix[i][j] = N.matrix[i][j + this->m];
+                I.setEntry(N.getEntry(i, j + A.getCol()), i, j);
             }
         }
         return I;
